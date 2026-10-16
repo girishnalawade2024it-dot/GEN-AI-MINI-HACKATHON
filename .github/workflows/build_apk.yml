@@ -28,14 +28,21 @@ jobs:
         with:
           gradle-version: '8.2'
 
-      - name: Accept Android SDK Licenses
+      - name: Configure Android SDK Location & Accept Licenses
         run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build Debug APK
         run: |
           cd android
-          gradle :app:assembleDebug --no-daemon --stacktrace
+          gradle :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee ../gradle_output.txt
+
+      - name: Print Error Summary If Failed
+        if: failure()
+        run: |
+          echo "=================== ERROR LOG ==================="
+          tail -n 120 gradle_output.txt
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
