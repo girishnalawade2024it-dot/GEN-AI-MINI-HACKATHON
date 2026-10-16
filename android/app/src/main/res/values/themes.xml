@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.ScamShield" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/danger_red</item>
+        <item name="colorPrimaryVariant">@color/danger_dark</item>
+        <item name="colorOnPrimary">@color/text_primary</item>
+        <item name="android:statusBarColor">@color/primary_variant</item>
+        <item name="android:windowBackground">@color/primary</item>
+    </style>
+</resources>

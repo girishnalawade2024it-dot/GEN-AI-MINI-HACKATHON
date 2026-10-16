@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">ScamShield</string>
+    <string name="notification_service_label">ScamShield Notification Scanner</string>
+    <string name="alert_title">⚠️ ScamShield Alert</string>
+    <string name="alert_subtitle">Suspicious Scam / Phishing Detected</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_block">Block Sender</string>
+    <string name="action_view_safely">View Safely</string>
+    <string name="service_running_title">ScamShield Shield Active</string>
+    <string name="service_running_desc">On-device transformer model monitoring SMS &amp; messages locally</string>
+</resources>

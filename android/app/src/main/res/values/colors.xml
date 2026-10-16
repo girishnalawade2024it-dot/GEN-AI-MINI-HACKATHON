@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#1A1C1E</color>
+    <color name="primary_variant">#121316</color>
+    <color name="danger_red">#D32F2F</color>
+    <color name="danger_red_glow">#FF4D4D</color>
+    <color name="danger_dark">#7F0000</color>
+    <color name="danger_bg">#2A1010</color>
+    <color name="overlay_card_bg">#18191C</color>
+    <color name="overlay_border">#E53935</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B3B8</color>
+    <color name="text_muted">#7A7D85</color>
+    <color name="badge_bg">#3D1414</color>
+    <color name="btn_secondary">#2C2D31</color>
+    <color name="btn_secondary_pressed">#3E4046</color>
+    <color name="safe_green">#00C853</color>
+</resources>
