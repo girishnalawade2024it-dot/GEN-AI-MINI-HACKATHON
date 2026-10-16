@@ -3,9 +3,10 @@ name: Build ScamShield Android APK
 on:
   push:
     branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -36,17 +37,30 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
-          gradle :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee ../gradle_output.txt
-
-      - name: Print Error Summary If Failed
-        if: failure()
-        run: |
-          echo "=================== ERROR LOG ==================="
-          tail -n 120 gradle_output.txt
+          gradle :app:assembleDebug --no-daemon --stacktrace
+          echo "=== LOCATING GENERATED APK FILES ==="
+          find . -name "*.apk"
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ScamShield-Debug-APK
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
           retention-days: 14
+
+      - name: Create or Update GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "ScamShield v1.0.0 (On-Device Transformer)"
+          body: |
+            ## 🛡️ ScamShield v1.0.0
+            Mobile-first, privacy-preserving scam detection app with on-device INT8 quantized Transformer model.
+            
+            ### 📱 Download & Install:
+            Download **`app-debug.apk`** below directly onto your Android device!
+          files: android/app/build/outputs/apk/**/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
