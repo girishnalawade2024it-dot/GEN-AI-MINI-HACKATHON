@@ -126,11 +126,11 @@ class OverlayService : Service() {
             overlayType,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = 80 // Position slightly below notification bar
+            y = 100 // Position comfortably below notification bar
         }
 
         // Bind Views
@@ -177,12 +177,19 @@ class OverlayService : Service() {
         }
 
         // Gesture: Swipe up to dismiss or drag card
-        setupDragAndDismiss(overlayView!!)
+        val cardContainer = overlayView?.findViewById<View>(R.id.cardContainer)
+        cardContainer?.let { setupDragAndDismiss(it) }
 
         try {
             windowManager?.addView(overlayView, layoutParams)
+            Log.d(TAG, "Overlay view added successfully to WindowManager")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to add window view for overlay", e)
+            Log.e(TAG, "Failed to add window view for overlay: ${e.message}", e)
+            Toast.makeText(
+                this,
+                "Overlay blocked: Please ensure 'Display pop-up windows while running in the background' is enabled in Settings",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -194,13 +201,12 @@ class OverlayService : Service() {
         view.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    initialY = layoutParams?.y ?: 0
+                    initialY = layoutParams?.y ?: 100
                     initialTouchY = event.rawY
-                    true
+                    false
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val deltaY = (event.rawY - initialTouchY).toInt()
-                    // Allow dragging downward slightly or upward
                     layoutParams?.y = initialY + deltaY
                     try {
                         windowManager?.updateViewLayout(overlayView, layoutParams)
@@ -211,26 +217,18 @@ class OverlayService : Service() {
                 }
                 MotionEvent.ACTION_UP -> {
                     val totalDeltaY = event.rawY - initialTouchY
-                    // If swiped up by > 100 pixels, dismiss
-                    if (totalDeltaY < -100) {
+                    if (totalDeltaY < -120) {
                         removeOverlay()
                         stopSelf()
                     } else {
-                        // Snap back to default position
-                        layoutParams?.y = 80
+                        layoutParams?.y = 100
                         try {
                             windowManager?.updateViewLayout(overlayView, layoutParams)
                         } catch (e: Exception) {
                             // Detached
                         }
                     }
-                    true
-                }
-                MotionEvent.ACTION_OUTSIDE -> {
-                    // Tap outside dismisses overlay
-                    removeOverlay()
-                    stopSelf()
-                    true
+                    false
                 }
                 else -> false
             }
@@ -267,24 +265,36 @@ class OverlayService : Service() {
     }
 
     private fun startForegroundNotification() {
-        val launchIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            launchIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        try {
+            val launchIntent = Intent(this, MainActivity::class.java)
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                launchIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
 
-        val notification: Notification = NotificationCompat.Builder(this, ScamShieldApp.CHANNEL_SERVICE_ID)
-            .setContentTitle(getString(R.string.service_running_title))
-            .setContentText(getString(R.string.service_running_desc))
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+            val notification: Notification = NotificationCompat.Builder(this, ScamShieldApp.CHANNEL_SERVICE_ID)
+                .setContentTitle(getString(R.string.service_running_title))
+                .setContentText(getString(R.string.service_running_desc))
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
 
-        startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    FOREGROUND_NOTIFICATION_ID,
+                    notification,
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } else {
+                startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting foreground notification: ${e.message}", e)
+        }
     }
 
     override fun onDestroy() {

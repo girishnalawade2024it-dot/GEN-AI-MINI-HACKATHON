@@ -169,6 +169,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             val text = etTestInput.text.toString().trim()
+            Toast.makeText(this, "Launching Truecaller Alert Overlay...", Toast.LENGTH_SHORT).show()
             OverlayService.startOverlay(
                 context = this,
                 sender = "+1 (800) 555-0199",
