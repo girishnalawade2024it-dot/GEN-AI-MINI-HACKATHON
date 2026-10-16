@@ -50,8 +50,7 @@ android {
         viewBinding = true
     }
 
-    aaptOptions {
-        // Prevent aapt from compressing the ONNX model in assets to speed up memory-mapped loading
+    androidResources {
         noCompress += listOf("onnx")
     }
 }
