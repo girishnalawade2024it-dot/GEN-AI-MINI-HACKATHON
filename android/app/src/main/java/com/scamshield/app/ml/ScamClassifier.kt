@@ -151,12 +151,24 @@ class ScamClassifier private constructor(private val context: Context) {
             // 2. Execute Local ONNX Model Inference
             val outputs = session.run(inputs)
             outputs.use { result ->
-                val logitsRaw = result.get(0).value
+                var outputTensor: OnnxTensor? = null
+                for (entry in result) {
+                    if (entry.key == "logits") {
+                        outputTensor = entry.value as? OnnxTensor
+                        break
+                    }
+                }
+                if (outputTensor == null && result.iterator().hasNext()) {
+                    outputTensor = result.iterator().next().value as? OnnxTensor
+                }
+
+                val logitsRaw = outputTensor?.value
+                    ?: throw IllegalStateException("Failed to extract output tensor from ONNX inference result")
 
                 // Logits shape: [1, 2] -> [logits_ham, logits_scam]
                 val logits = when (logitsRaw) {
                     is Array<*> -> (logitsRaw[0] as FloatArray)
-                    else -> throw IllegalStateException("Unexpected logits format: ${logitsRaw?.javaClass}")
+                    else -> throw IllegalStateException("Unexpected logits format: ${logitsRaw.javaClass}")
                 }
 
                 val probs = softmax(logits)
